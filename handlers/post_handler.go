@@ -5,6 +5,7 @@ import (
 	"blog-api/database"
 	"blog-api/models"
 	"blog-api/utils"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -14,10 +15,70 @@ import (
 
 // GET /posts
 func GetPosts(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, title, content, created_at FROM posts")
+	// Ambil parameter query
+	query := r.URL.Query().Get("q")        // kata kunci pencarian
+	pageStr := r.URL.Query().Get("page")   // halaman ke berapa
+	limitStr := r.URL.Query().Get("limit") // jumlah per halaman
+
+	// Set default
+	page := 1
+	limit := 5
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	offset := (page - 1) * limit
+
+	var rows *sql.Rows
+	var count int
+	var err error
+
+	if query != "" {
+		// Hitung total yang cocok
+		countQuery := "SELECT COUNT(*) FROM posts WHERE title LIKE ? OR content LIKE ?"
+		err = database.DB.QueryRow(countQuery, "%"+query+"%", "%"+query+"%").Scan(&count)
+		if err != nil {
+			utils.SendError(w, "Gagal menghitung data", http.StatusInternalServerError, err)
+			return
+		}
+
+		// Ambil data dengan pencarian + pagination
+		searchQuery := `
+			SELECT id, title, content, created_at 
+			FROM posts 
+			WHERE title LIKE ? OR content LIKE ?
+			ORDER BY created_at DESC
+			LIMIT ? OFFSET ?
+		`
+		rows, err = database.DB.Query(searchQuery, "%"+query+"%", "%"+query+"%", limit, offset)
+	} else {
+		// Hitung total semua
+		err = database.DB.QueryRow("SELECT COUNT(*) FROM posts").Scan(&count)
+		if err != nil {
+			utils.SendError(w, "Gagal menghitung total data", http.StatusInternalServerError, err)
+			return
+		}
+
+		// Ambil semua data dengan pagination
+		allQuery := `
+			SELECT id, title, content, created_at 
+			FROM posts 
+			ORDER BY created_at DESC
+			LIMIT ? OFFSET ?
+		`
+		rows, err = database.DB.Query(allQuery, limit, offset)
+	}
+
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusInternalServerError)
-		utils.SendError(w, err.Error(), http.StatusInternalServerError, err)
+		utils.SendError(w, "Gagal mengambil data", http.StatusInternalServerError, err)
 		return
 	}
 	defer rows.Close()
@@ -25,12 +86,35 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	var posts []models.Post
 	for rows.Next() {
 		var p models.Post
-		rows.Scan(&p.ID, &p.Title, &p.Content, &p.Created_at)
+		rows.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 		posts = append(posts, p)
 	}
 
+	// Hitung total halaman
+	totalPages := (count + limit - 1) / limit // ceil(count / limit)
+
+	// Response dengan metadata
+	response := struct {
+		Data       []models.Post `json:"data"`
+		Page       int           `json:"page"`
+		Limit      int           `json:"limit"`
+		Total      int           `json:"total"`
+		TotalPages int           `json:"total_pages"`
+		HasNext    bool          `json:"has_next"`
+		HasPrev    bool          `json:"has_prev"`
+	}{
+		Data:       posts,
+		Page:       page,
+		Limit:      limit,
+		Total:      count,
+		TotalPages: totalPages,
+		HasNext:    page < totalPages,
+		HasPrev:    page > 1,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(posts)
+	json.NewEncoder(w).Encode(response)
+	// http://192.168.1.5:8080/posts?page=2&limit=3
 }
 
 // GET /posts/{id}
@@ -45,7 +129,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 
 	var p models.Post
 	err = database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id).
-		Scan(&p.ID, &p.Title, &p.Content, &p.Created_at)
+		Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		// http.Error(w, "Post tidak ditemukan", http.StatusNotFound)
 		utils.SendError(w, "Post tidak ditemukan", http.StatusNotFound, err)
@@ -88,7 +172,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	// p.ID = int(id)
 	// 1. Ambil data dari database menggunakan ID yang baru
 	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id)
-	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.Created_at)
+	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		utils.SendError(w, "Gagal mengambil data post yang baru dibuat", http.StatusInternalServerError, err)
 		return
@@ -138,7 +222,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 	// p.ID = int(id)
 	// 1. Ambil data dari database menggunakan ID yang baru
 	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id)
-	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.Created_at)
+	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		utils.SendError(w, "Gagal mengambil data post yang baru dibuat", http.StatusInternalServerError, err)
 		return
