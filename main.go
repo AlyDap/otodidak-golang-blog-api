@@ -26,6 +26,11 @@ func main() {
 		r.Delete("/{id}", handlers.DeletePost)
 	})
 
-	log.Println("Server jalan di :8080")
-	http.ListenAndServe(":8080", r)
+	// log.Println("Server jalan di :8080")
+	// http.ListenAndServe(":8080", r)
+
+	// deploy ke local server
+	log.Println("Server jalan di http://0.0.0.0:8080 (akses via IP lokal di jaringan)")
+	http.ListenAndServe("0.0.0.0:8080", r)
+	// 0.0.0.0 berarti: dengarkan semua antarmuka jaringan (bukan hanya localhost).
 }
