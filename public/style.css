@@ -1,0 +1,91 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: Arial, sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 20px;
+}
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+h1 {
+  text-align: center;
+  color: #333;
+}
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+input,
+textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  padding: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background: #0056b3;
+}
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.controls input {
+  flex: 1;
+  min-width: 150px;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+li:last-child {
+  border-bottom: none;
+}
+li strong {
+  font-size: 1.1em;
+  color: #007bff;
+}
+.delete-btn {
+  background: #dc3545;
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 0.9em;
+}
+
+.post-edit {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+.post-edit input,
+.post-edit textarea {
+  width: 100%;
+  margin-bottom: 8px;
+}

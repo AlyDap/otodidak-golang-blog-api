@@ -5,14 +5,14 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/sqlite"
 )
 
 var DB *sql.DB
 
 func InitDB() {
 	var err error
-	DB, err = sql.Open("sqlite3", "./blog.db")
+	DB, err = sql.Open("sqlite", "./blog.db")
 	if err != nil {
 		log.Fatal("Gagal buka database:", err)
 	}

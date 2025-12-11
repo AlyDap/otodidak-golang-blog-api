@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog Saya (Go + SQLite)</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <h1>📝 Blog Saya</h1>
+    <div id="notif" style="display:none; padding:10px; margin:10px 0; border-radius:4px;"></div>
+
+    <!-- Form Tambah -->
+    <form id="addForm">
+      <input type="text" id="title" placeholder="Judul" required />
+      <textarea id="content" placeholder="Isi catatan..." required></textarea>
+      <button type="submit" id="addBtn">➕ Tambah Post</button>
+    </form>
+
+    <!-- Search & Pagination -->
+    <div class="controls">
+      <input type="text" id="search" placeholder="Cari..." />
+      <button id="searchBtn">Cari</button>
+      <button id="prev" disabled>« Sebelumnya</button>
+      <span id="pageInfo">Halaman 1</span>
+      <button id="next">Berikutnya »</button>
+    </div>
+
+    <!-- Daftar Post -->
+    <ul id="postList"></ul>
+
+    <p id="loading" style="display:none">Memuat...</p>
+    <p id="error" style="color:red; display:none"></p>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
