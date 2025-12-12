@@ -1,0 +1,14 @@
+# render.yaml
+version: "1"
+
+services:
+  - type: web
+    name: blog-api
+    env: go
+    go_version: "1.25.4" # sesuaikan dengan `go version`
+    build_command: go build -o blog-api .
+    start_command: ./blog-api
+    env_vars:
+      - key: API_KEY
+        value: rahasia123 # ganti dengan kunci rahasia mu!
+    health_check_path: /posts
