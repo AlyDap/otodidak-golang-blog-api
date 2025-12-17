@@ -43,7 +43,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 
 	if query != "" {
 		// Hitung total yang cocok
-		countQuery := "SELECT COUNT(*) FROM posts WHERE title LIKE ? OR content LIKE ?"
+		countQuery := "SELECT COUNT(*) FROM posts WHERE title LIKE $1 OR content LIKE $2"
 		err = database.DB.QueryRow(countQuery, "%"+query+"%", "%"+query+"%").Scan(&count)
 		if err != nil {
 			utils.SendError(w, "Gagal menghitung data", http.StatusInternalServerError, err)
@@ -54,9 +54,9 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		searchQuery := `
 			SELECT id, title, content, created_at 
 			FROM posts 
-			WHERE title LIKE ? OR content LIKE ?
+			WHERE title LIKE $1 OR content LIKE $2
 			ORDER BY created_at DESC
-			LIMIT ? OFFSET ?
+			LIMIT $3 OFFSET $4
 		`
 		rows, err = database.DB.Query(searchQuery, "%"+query+"%", "%"+query+"%", limit, offset)
 	} else {
@@ -72,7 +72,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 			SELECT id, title, content, created_at 
 			FROM posts 
 			ORDER BY created_at DESC
-			LIMIT ? OFFSET ?
+			LIMIT $1 OFFSET $2
 		`
 		rows, err = database.DB.Query(allQuery, limit, offset)
 	}
@@ -83,7 +83,8 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var posts []models.Post
+	var posts = []models.Post{}
+
 	for rows.Next() {
 		var p models.Post
 		rows.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
@@ -128,7 +129,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var p models.Post
-	err = database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id).
+	err = database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = $1", id).
 		Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		// http.Error(w, "Post tidak ditemukan", http.StatusNotFound)
@@ -161,17 +162,27 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := database.DB.Exec("INSERT INTO posts (title, content) VALUES (?, ?)", p.Title, p.Content)
+	// sqlite
+	// res, err := database.DB.Exec("INSERT INTO posts (title, content) VALUES ($1, $2)", p.Title, p.Content)
+	// if err != nil {
+	// 	// http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	utils.SendError(w, err.Error(), http.StatusInternalServerError, err)
+	// 	return
+	// }
+
+	// id, _ := res.LastInsertId()
+
+	// postgresql
+	var id int
+	err := database.DB.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", p.Title, p.Content).Scan(&id)
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusInternalServerError)
-		utils.SendError(w, err.Error(), http.StatusInternalServerError, err)
+		utils.SendError(w, "Gagal menyimpan post", http.StatusInternalServerError, err)
 		return
 	}
 
-	id, _ := res.LastInsertId()
 	// p.ID = int(id)
 	// 1. Ambil data dari database menggunakan ID yang baru
-	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id)
+	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = $1", id)
 	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		utils.SendError(w, "Gagal mengambil data post yang baru dibuat", http.StatusInternalServerError, err)
@@ -212,7 +223,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.DB.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ?", p.Title, p.Content, id)
+	_, err = database.DB.Exec("UPDATE posts SET title = $1, content = $2 WHERE id = $3", p.Title, p.Content, id)
 	if err != nil {
 		// http.Error(w, "Gagal update post", http.StatusInternalServerError)
 		utils.SendError(w, "Gagal update post", http.StatusInternalServerError, err)
@@ -221,7 +232,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	// p.ID = int(id)
 	// 1. Ambil data dari database menggunakan ID yang baru
-	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = ?", id)
+	row := database.DB.QueryRow("SELECT id, title, content, created_at FROM posts WHERE id = $1", id)
 	err = row.Scan(&p.ID, &p.Title, &p.Content, &p.CreatedAt)
 	if err != nil {
 		utils.SendError(w, "Gagal mengambil data post yang baru dibuat", http.StatusInternalServerError, err)
@@ -241,7 +252,7 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = database.DB.Exec("DELETE FROM posts WHERE id = ?", id)
+	_, err = database.DB.Exec("DELETE FROM posts WHERE id = $1", id)
 	if err != nil {
 		// http.Error(w, "Gagal hapus post", http.StatusInternalServerError)
 		utils.SendError(w, "Gagal hapus post", http.StatusInternalServerError, err)

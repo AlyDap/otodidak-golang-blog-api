@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/sys v0.7.0 // indirect
@@ -37,4 +38,7 @@ require (
 // install godotenv untuk baca .env
 // go get github.com/joho/godotenv
 
-// go mod tidy 
+// go mod tidy
+
+// install postgre sql
+// go get github.com/lib/pq

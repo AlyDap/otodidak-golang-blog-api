@@ -37,3 +37,14 @@ Router: chi
 Database: SQLite
 Fitur: CRUD lengkap (POST, GET all, GET by ID, PUT, DELETE) + Filter & Paginate
 Struktur proyek bersih dan mudah dikembangkan
+
+### SQLite -> PostgreSQL
+
+Postgree pakai $1 $2 $3 pada code sql dan butuh order by kalau ada LIMIT/OFFSET
+sqlite pakai ? ? ? ? pada code sql
+
+dari SQLite → PostgreSQL, selalu cek:
+Placeholder: ? → $1, $2, ...
+Tipe data: DATETIME → TIMESTAMP
+Auto-increment: AUTOINCREMENT → SERIAL
+String literal: aman, tapi hindari backtick `

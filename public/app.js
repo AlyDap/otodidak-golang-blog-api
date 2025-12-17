@@ -1,6 +1,8 @@
 // Konfigurasi
 // const API_BASE = "http://localhost:8080";
-const API_BASE = "http://192.168.1.9:8080";
+// const API_BASE = "http://192.168.1.5:8080";
+// const API_BASE = window.location.origin;
+const API_BASE = "";
 const API_KEY = "rahasia123"; // sesuaikan dengan .env
 
 // State
@@ -36,6 +38,11 @@ async function fetchPosts(page = 1, query = "") {
     if (!res.ok) throw new Error("Gagal ambil data");
     const data = await res.json();
 
+    // Pastikan data.data selalu array
+    if (!Array.isArray(data.data)) {
+      throw new Error("Format respons tidak valid");
+    }
+
     // Render
     postList.innerHTML = "";
     if (data.data.length === 0) {
@@ -45,21 +52,23 @@ async function fetchPosts(page = 1, query = "") {
         const li = document.createElement("li");
         li.dataset.id = post.id;
         li.innerHTML = `
-    <div class="post-view" id="view-${post.id}">
-      <strong>${post.title}</strong><br>
-      <small>${new Date(post.created_at).toLocaleString()}</small><br>
-      ${post.content}
-      <br>
-      <button class="edit-btn" data-id="${post.id}">✏️ Edit</button>
-      <button class="delete-btn" data-id="${post.id}">🗑️ Hapus</button>
-    </div>
-    <div class="post-edit" id="edit-${post.id}" style="display:none;">
-      <input type="text" class="edit-title" value="${post.title}" required />
-      <textarea class="edit-content" required>${post.content}</textarea>
-      <button class="save-btn" data-id="${post.id}">💾 Simpan</button>
-      <button class="cancel-btn" data-id="${post.id}">❌ Batal</button>
-    </div>
-  `;
+          <div class="post-view" id="view-${post.id}">
+            <strong>${post.title}</strong><br>
+            <small>${new Date(post.created_at).toLocaleString()}</small><br>
+            ${post.content}
+            <br>
+            <button class="edit-btn" data-id="${post.id}">✏️ Edit</button>
+            <button class="delete-btn" data-id="${post.id}">🗑️ Hapus</button>
+          </div>
+          <div class="post-edit" id="edit-${post.id}" style="display:none;">
+            <input type="text" class="edit-title" value="${
+              post.title
+            }" required />
+            <textarea class="edit-content" required>${post.content}</textarea>
+            <button class="save-btn" data-id="${post.id}">💾 Simpan</button>
+            <button class="cancel-btn" data-id="${post.id}">❌ Batal</button>
+          </div>
+        `;
         postList.appendChild(li);
       });
 
